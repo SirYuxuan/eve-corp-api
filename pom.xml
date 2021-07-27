@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.yuxuan66</groupId>
+    <artifactId>eve-corp-api</artifactId>
+    <version>0.0.1</version>
+    <description>
+        EVE军团管理系统Api-开源版
+        欧服混沌仲裁者招新，新手群：1007805049
+    </description>
+
+    <developers>
+        <developer>
+            <name>Sir丶雨轩</name>
+            <email>1718018032@qq.com</email>
+            <url>https://www.yuxuan66.com</url>
+            <timezone>+8</timezone>
+            <organization>混沌仲裁者</organization>
+            <organizationUrl>http://www.hd-eve.com</organizationUrl>
+        </developer>
+    </developers>
+
+    <properties>
+        <java.version>11</java.version>
+    </properties>
+
+</project>
