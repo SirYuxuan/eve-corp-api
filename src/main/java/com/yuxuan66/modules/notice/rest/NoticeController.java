@@ -16,37 +16,36 @@
  * You should have received a copy of the GNU General Public License
  * along with Sir丶雨轩/eve-corp-api.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.yuxuan66.common.utils;
+package com.yuxuan66.modules.notice.rest;
 
-import cn.dev33.satoken.stp.StpUtil;
-import com.yuxuan66.modules.user.entity.User;
+import com.yuxuan66.modules.notice.service.NoticeService;
+import com.yuxuan66.support.basic.http.RespEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 扩展StpUtil的功能
+ * 公告控制器
  * @author Sir丶雨轩
  * @since 2021/7/27
  */
-public class StpEx extends StpUtil {
+@RestController
+@RequestMapping(path = "/notice")
+public class NoticeController {
 
-    /**
-     * 登录的session key
-     */
-    private static final String LOGIN_KEY = "loginUser";
+    private final NoticeService noticeService;
 
-    /**
-     * 登录并保存当前用户
-     * @param user 用户
-     */
-    public static void loginSaveUser(User user){
-        login(user.getId());
-        getSession().set(LOGIN_KEY,user);
+    public NoticeController(NoticeService noticeService) {
+        this.noticeService = noticeService;
     }
 
     /**
-     * 获取当前登录的用户
-     * @return 用户信息
+     * 按置顶和发布时间获取5条公告
+     *
+     * @return 公告列表
      */
-    public static User getLoginUser(){
-        return getSession().getModel(LOGIN_KEY,User.class);
+    @GetMapping(path = "/top5")
+    public RespEntity top5(){
+        return noticeService.top5();
     }
 }

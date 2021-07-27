@@ -16,37 +16,37 @@
  * You should have received a copy of the GNU General Public License
  * along with Sir丶雨轩/eve-corp-api.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.yuxuan66.common.utils;
+package com.yuxuan66.modules.media.rest;
 
-import cn.dev33.satoken.stp.StpUtil;
-import com.yuxuan66.modules.user.entity.User;
+import com.yuxuan66.modules.media.service.MediaService;
+import com.yuxuan66.support.basic.http.RespEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 扩展StpUtil的功能
+ * 军团媒体
  * @author Sir丶雨轩
  * @since 2021/7/27
  */
-public class StpEx extends StpUtil {
+@RestController
+@RequestMapping(path = "/media")
+public class MediaController {
 
-    /**
-     * 登录的session key
-     */
-    private static final String LOGIN_KEY = "loginUser";
+    private final MediaService mediaService;
 
-    /**
-     * 登录并保存当前用户
-     * @param user 用户
-     */
-    public static void loginSaveUser(User user){
-        login(user.getId());
-        getSession().set(LOGIN_KEY,user);
+    public MediaController(MediaService mediaService) {
+        this.mediaService = mediaService;
     }
 
     /**
-     * 获取当前登录的用户
-     * @return 用户信息
+     * 获取某种类型top5的记录
+     *
+     * @param type 类型
+     * @return top5数据
      */
-    public static User getLoginUser(){
-        return getSession().getModel(LOGIN_KEY,User.class);
+    @GetMapping(path = "/top5ByType")
+    public RespEntity top5ByType(Integer type){
+        return mediaService.top5ByType(type);
     }
 }

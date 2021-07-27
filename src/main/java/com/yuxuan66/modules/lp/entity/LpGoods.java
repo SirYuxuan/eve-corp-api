@@ -1,0 +1,80 @@
+/*
+ * Copyright 2013-2021 Sir丶雨轩
+ *
+ * This file is part of Sir丶雨轩/eve-corp-api.
+
+ * Sir丶雨轩/eve-corp-api is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+
+ * Sir丶雨轩/eve-corp-api is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with Sir丶雨轩/eve-corp-api.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+
+package com.yuxuan66.modules.lp.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.Serializable;
+import java.sql.Timestamp;
+
+/**
+ * LP商品表(CorpLpGoods)实体类
+ *
+ * @author Sir丶雨轩
+ * @since 2021-07-27 16:51:43
+ */
+@Setter
+@Getter
+@TableName("corp_lp_goods")
+public class LpGoods implements Serializable {
+
+    private Long id;
+    /**
+     * 商品标题
+     */
+    private String title;
+    /**
+     * 商品类型
+     */
+    private String type;
+    /**
+     * 所需要的LP
+     */
+    private Long lp;
+    /**
+     * 商品总数量
+     */
+    private Integer num;
+    /**
+     * 已销售数量
+     */
+    private Integer shopNum;
+    /**
+     * 商品图片
+     */
+    private String pic;
+    /**
+     * 创建时间
+     */
+    private Timestamp createTime;
+    /**
+     * 创建人
+     */
+    private String createBy;
+    /**
+     * 创建人ID
+     */
+    private Long createId;
+
+
+}

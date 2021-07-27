@@ -152,7 +152,7 @@ public class AuthService {
         user.setLastIp(ServletUtil.getClientIP(WebUtil.getRequest()));
         user.setLastCity(WebUtil.getIPCity(user.getLastIp()));
         userMapper.updateById(user);
-        return systemConfig.getWebPath() + "login?token=" + StpEx.getTokenValue();
+        return systemConfig.getWebPath() + "loginHD?token=" + StpEx.getTokenValue();
     }
 
     /**

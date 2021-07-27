@@ -16,37 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with Sir丶雨轩/eve-corp-api.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.yuxuan66.common.utils;
+package com.yuxuan66.modules.notice.mapper;
 
-import cn.dev33.satoken.stp.StpUtil;
-import com.yuxuan66.modules.user.entity.User;
+import com.yuxuan66.modules.notice.entity.Notice;
+import com.yuxuan66.support.basic.BasicMapper;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 /**
- * 扩展StpUtil的功能
+ * 公告操作
  * @author Sir丶雨轩
  * @since 2021/7/27
  */
-public class StpEx extends StpUtil {
+@Mapper
+public interface NoticeMapper extends BasicMapper<Notice> {
 
     /**
-     * 登录的session key
+     * 按照时间和置顶排序获取5条公告
+     * @return 公告列表
      */
-    private static final String LOGIN_KEY = "loginUser";
-
-    /**
-     * 登录并保存当前用户
-     * @param user 用户
-     */
-    public static void loginSaveUser(User user){
-        login(user.getId());
-        getSession().set(LOGIN_KEY,user);
-    }
-
-    /**
-     * 获取当前登录的用户
-     * @return 用户信息
-     */
-    public static User getLoginUser(){
-        return getSession().getModel(LOGIN_KEY,User.class);
-    }
+    @Select("select * from corp_notice ORDER BY is_top desc,create_time desc limit 5")
+    List<Notice> top5();
 }

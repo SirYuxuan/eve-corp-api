@@ -16,37 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with Sir丶雨轩/eve-corp-api.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.yuxuan66.common.utils;
+package com.yuxuan66.modules.group.service;
 
-import cn.dev33.satoken.stp.StpUtil;
-import com.yuxuan66.modules.user.entity.User;
+import com.yuxuan66.modules.group.mapper.QQGroupMapper;
+import com.yuxuan66.support.basic.http.RespEntity;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
 
 /**
- * 扩展StpUtil的功能
+ * QQ群服务
+ *
  * @author Sir丶雨轩
  * @since 2021/7/27
  */
-public class StpEx extends StpUtil {
+@Service
+public class QQGroupService {
+
+    @Resource
+    private QQGroupMapper qqGroupMapper;
 
     /**
-     * 登录的session key
+     * 查询所有的QQ群
+     * @return QQ群列表
      */
-    private static final String LOGIN_KEY = "loginUser";
-
-    /**
-     * 登录并保存当前用户
-     * @param user 用户
-     */
-    public static void loginSaveUser(User user){
-        login(user.getId());
-        getSession().set(LOGIN_KEY,user);
-    }
-
-    /**
-     * 获取当前登录的用户
-     * @return 用户信息
-     */
-    public static User getLoginUser(){
-        return getSession().getModel(LOGIN_KEY,User.class);
+    public RespEntity all() {
+        return RespEntity.success(qqGroupMapper.selectList(null));
     }
 }

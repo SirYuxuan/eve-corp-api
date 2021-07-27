@@ -1,0 +1,7 @@
+sa-token:
+  activity-timeout: 86400
+  token-style: random-32
+  allow-concurrent-login: true
+  is-share: false
+  token-name: Authorization
+  is-v: false

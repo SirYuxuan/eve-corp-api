@@ -16,37 +16,49 @@
  * You should have received a copy of the GNU General Public License
  * along with Sir丶雨轩/eve-corp-api.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.yuxuan66.common.utils;
 
-import cn.dev33.satoken.stp.StpUtil;
-import com.yuxuan66.modules.user.entity.User;
+
+package com.yuxuan66.modules.calendar.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.Serializable;
+import java.sql.Timestamp;
 
 /**
- * 扩展StpUtil的功能
+ * 军团日程表(CorpCalendar)实体类
+ *
  * @author Sir丶雨轩
- * @since 2021/7/27
+ * @since 2021-07-27 16:15:23
  */
-public class StpEx extends StpUtil {
+@Setter
+@Getter
+@TableName("corp_calendar")
+public class Calendar implements Serializable {
 
+    private Long id;
     /**
-     * 登录的session key
+     * 标题
      */
-    private static final String LOGIN_KEY = "loginUser";
+    private String title;
+    /**
+     * 时间
+     */
+    private String time;
+    /**
+     * 创建人
+     */
+    private String createBy;
+    /**
+     * 创建人ID
+     */
+    private Long createId;
+    /**
+     * 创建时间
+     */
+    private Timestamp createTime;
 
-    /**
-     * 登录并保存当前用户
-     * @param user 用户
-     */
-    public static void loginSaveUser(User user){
-        login(user.getId());
-        getSession().set(LOGIN_KEY,user);
-    }
 
-    /**
-     * 获取当前登录的用户
-     * @return 用户信息
-     */
-    public static User getLoginUser(){
-        return getSession().getModel(LOGIN_KEY,User.class);
-    }
 }
