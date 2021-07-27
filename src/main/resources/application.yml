@@ -1,0 +1,12 @@
+# 服务名称
+spring:
+  application:
+    name: eveCorpApi
+  profiles:
+    include: database, system, mybatis
+  jackson:
+    date-format: 'yyyy-MM-dd HH:mm:ss'
+    time-zone: GMT+8
+# 服务端口号
+server:
+  port: 10002
