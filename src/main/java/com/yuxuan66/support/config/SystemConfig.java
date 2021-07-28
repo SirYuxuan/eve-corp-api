@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * 系统配置类，对应 application-system.yml
+ *
  * @author Sir丶雨轩
  * @since 2021/7/27
  */
@@ -38,6 +39,12 @@ public class SystemConfig {
      */
     @Value("${eve.mainCorp}")
     private Long eveMainCorp;
+
+    /**
+     * Eve 管理员邮箱
+     */
+    @Value("#{'${eve.managerMail}'.empty ? new String[] : '${eve.managerMail}'.split(',')}")
+    private String[] eveManagerMail;
 
     /**
      * eve esi clientId

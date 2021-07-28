@@ -28,50 +28,70 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 
 /**
- * 军团LP发放记录表(CorpLpLog)实体类
+ * 军团LP商品购买记录表(CorpGoodsBuyLog)实体类
  *
  * @author Sir丶雨轩
- * @since 2021-07-27 16:01:43
+ * @since 2021-07-28 14:16:22
  */
 @Setter
 @Getter
-@TableName("corp_lp_log")
-public class LpLog implements Serializable {
+@TableName("corp_goods_buy_log")
+public class GoodsBuyLog implements Serializable {
 
     private Long id;
     /**
-     * 角色名
+     * 标题
      */
-    private String characterName;
+    private String title;
     /**
-     * LP数量
+     * 数量
      */
-    private Long lp;
+    private Integer num;
     /**
-     * 1=PAP自动转换,2=手动发放,3=用户转账，4=兑换商品,5=兑换退款,6=物品兑换
+     * 状态1=等待，2=通过，3=拒绝
      */
-    private Integer source;
+    private Integer status;
     /**
-     * DKP操作，1=支出，2=收入
-     */
-    private Integer type;
-    /**
-     * 说明
+     * 兑换备注
      */
     private String content;
+    /**
+     * 审批备注
+     */
+    private String examineContent;
+    /**
+     * 审批时间
+     */
+    private Timestamp examineTime;
+    /**
+     * 审批人
+     */
+    private String examineBy;
+    /**
+     * 审批人ID
+     */
+    private Long examineId;
+    /**
+     * 申请人ID
+     */
+    private Long accountId;
+    /**
+     * 申请人角色名称
+     */
+    private String accountName;
+    /**
+     * 申请人账号ID
+     */
+    private Long userId;
 
     /**
-     * 兑换商品的日志ID
+     * 申请人账号昵称
      */
-    private Long buyLogId;
-
-    private String createBy;
-
-    private Long createId;
-
-
+    private String userName;
+    /**
+     * 创建时间
+     */
     private Timestamp createTime;
-
 
 
 }

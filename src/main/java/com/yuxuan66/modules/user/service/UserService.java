@@ -105,8 +105,15 @@ public class UserService {
      * @return 角色列表
      */
     public RespEntity listAccount() {
-        List<UserAccount> userAccountList = userAccountMapper.selectList(new QueryWrapper<UserAccount>().eq("user_id", StpEx.getLoginUser().getId()).orderByDesc("is_main"));
-        return RespEntity.success(userAccountList);
+        return RespEntity.success(getLoginAccount());
+    }
+
+    /**
+     * 获取当前登录账号的所有角色
+     * @return 角色列表
+     */
+    public List<UserAccount> getLoginAccount(){
+        return userAccountMapper.selectList(new QueryWrapper<UserAccount>().eq("user_id", StpEx.getLoginUser().getId()).orderByDesc("is_main"));
     }
 
     /**
@@ -119,4 +126,6 @@ public class UserService {
         userMapper.updateById(resources);
         return RespEntity.success();
     }
+
+
 }

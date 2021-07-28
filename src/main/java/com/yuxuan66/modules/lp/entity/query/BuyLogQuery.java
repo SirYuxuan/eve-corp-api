@@ -16,23 +16,22 @@
  * You should have received a copy of the GNU General Public License
  * along with Sir丶雨轩/eve-corp-api.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.yuxuan66;
+package com.yuxuan66.modules.lp.entity.query;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.servlet.ServletComponentScan;
-import org.springframework.scheduling.annotation.EnableAsync;
+import com.yuxuan66.modules.lp.entity.GoodsBuyLog;
+import com.yuxuan66.support.basic.BasicQuery;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
+ * 商品购买日志查询对象
+ *
  * @author Sir丶雨轩
- * @since 2021/7/27
+ * @since 2021/7/28
  */
-@SpringBootApplication
-@ServletComponentScan
-@EnableAsync
-public class EveCorpApp {
+@Setter
+@Getter
+public class BuyLogQuery extends BasicQuery<GoodsBuyLog> {
 
-    public static void main(String[] args) {
-        SpringApplication.run(EveCorpApp.class,args);
-    }
+    private Integer status;
 }

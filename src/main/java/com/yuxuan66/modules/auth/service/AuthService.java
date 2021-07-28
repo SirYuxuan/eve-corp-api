@@ -81,26 +81,26 @@ public class AuthService {
             userAccount.setAccessToken(tokenInfo.getAccessToken());
             userAccount.setRefreshToken(tokenInfo.getRefreshToken());
             userAccountMapper.updateById(userAccount);
-            User user = userMapper.selectById(userAccount.getId());
+            User user = userMapper.selectById(userAccount.getUserId());
 
             // 没有UserID 说明是直接点击的授权登录。这个时候应该进行常规的登录操作，由于角色已经存在与系统中，如果账号不存在则说明此数据异常
             if (user == null) {
-                return getErrorPath("account exist but user not exist .");
+                return getErrorPath("角色已存在，但是用户不存在");
             }
             // 没有传递UserID,说明是正常授权进行登录。
             if (DEFAULT_STATE.equals(state)) {
 
                 StpEx.loginSaveUser(user);
-                return getLoginSuccess(user);
+                return getLoginSuccess(user,state);
             }
             // 这里说明传递了UserID，意味着想要绑定到某个账号的，但是自身肯定已经存在了UserID，这里是将不支持绑定，如果是绑定自己则通过
             if (Convert.toLong(state).equals(userAccount.getUserId())) {
                 // 这里是绑定自身；放行且保存当前登录信息
                 StpEx.loginSaveUser(user);
-                return getLoginSuccess(user);
+                return getLoginSuccess(user,state);
             }
             // 这个角色属于别的用户 禁止再次绑定
-            return getErrorPath("account exist other user .");
+            return getErrorPath("此角色已被别的账号绑定");
         }
         // 角色不存在
         userAccount = new UserAccount();
@@ -139,7 +139,7 @@ public class AuthService {
         }
         userAccountMapper.insert(userAccount);
         StpEx.loginSaveUser(user);
-        return getLoginSuccess(user);
+        return getLoginSuccess(user,state);
     }
 
     /**
@@ -147,12 +147,17 @@ public class AuthService {
      *
      * @return 地址
      */
-    private String getLoginSuccess(User user) {
+    private String getLoginSuccess(User user,String state) {
         user.setLastTime(Lang.getTime());
         user.setLastIp(ServletUtil.getClientIP(WebUtil.getRequest()));
         user.setLastCity(WebUtil.getIPCity(user.getLastIp()));
         userMapper.updateById(user);
-        return systemConfig.getWebPath() + "loginHD?token=" + StpEx.getTokenValue();
+        if("NONE".equals(state)){
+            return systemConfig.getWebPath() + "loginHD?token=" + StpEx.getTokenValue();
+        }else{
+            return systemConfig.getWebPath() + "loginHD?token=close";
+        }
+
     }
 
     /**

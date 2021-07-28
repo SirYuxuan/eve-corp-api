@@ -16,23 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with Sir丶雨轩/eve-corp-api.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.yuxuan66;
+package com.yuxuan66.modules.lp.entity.dto;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.servlet.ServletComponentScan;
-import org.springframework.scheduling.annotation.EnableAsync;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.Set;
 
 /**
+ * LP商品兑换申请审批Dto
  * @author Sir丶雨轩
- * @since 2021/7/27
+ * @since 2021/7/28
  */
-@SpringBootApplication
-@ServletComponentScan
-@EnableAsync
-public class EveCorpApp {
+@Setter
+@Getter
+public class ExchangeApprovalDto {
 
-    public static void main(String[] args) {
-        SpringApplication.run(EveCorpApp.class,args);
-    }
+    private Set<Long> ids;
+    private String examineContent;
+    private Integer status;
+
 }

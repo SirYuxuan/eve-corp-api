@@ -16,23 +16,30 @@
  * You should have received a copy of the GNU General Public License
  * along with Sir丶雨轩/eve-corp-api.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.yuxuan66;
+package com.yuxuan66.common.async;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.servlet.ServletComponentScan;
-import org.springframework.scheduling.annotation.EnableAsync;
+import cn.hutool.extra.mail.MailUtil;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
 
 /**
+ * 异步发送邮件
+ *
  * @author Sir丶雨轩
- * @since 2021/7/27
+ * @since 2021/7/28
  */
-@SpringBootApplication
-@ServletComponentScan
-@EnableAsync
-public class EveCorpApp {
+@Component
+public class AsyncMail {
 
-    public static void main(String[] args) {
-        SpringApplication.run(EveCorpApp.class,args);
+    /**
+     * 发送邮件 异步执行
+     *
+     * @param to      发送给谁
+     * @param subject 主题
+     * @param content 内容
+     */
+    @Async
+    public void send(String to, String subject, String content) {
+        MailUtil.sendHtml(to, subject, content);
     }
 }

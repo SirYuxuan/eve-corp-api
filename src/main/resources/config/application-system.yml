@@ -2,6 +2,8 @@
 eve:
   # 主军团ID
   mainCorp: 98598862
+  # 管理者邮箱，可用来接受LP兑换通知等
+  managerMail: "1718018032@qq.com,437310811@qq.com"
   esi:
     clientId: 48c5156bb459482bb1b1185612369e1a
     secretKey: b9dmfiEosI0cJHXXdo3k11pZJ21phDVTdNeDwnBx

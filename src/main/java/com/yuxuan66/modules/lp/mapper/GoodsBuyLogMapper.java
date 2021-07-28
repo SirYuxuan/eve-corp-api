@@ -16,23 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with Sir丶雨轩/eve-corp-api.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.yuxuan66;
+package com.yuxuan66.modules.lp.mapper;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.servlet.ServletComponentScan;
-import org.springframework.scheduling.annotation.EnableAsync;
+import com.yuxuan66.modules.lp.entity.GoodsBuyLog;
+import com.yuxuan66.support.basic.BasicMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
+ * LP商品购买记录
  * @author Sir丶雨轩
- * @since 2021/7/27
+ * @since 2021/7/28
  */
-@SpringBootApplication
-@ServletComponentScan
-@EnableAsync
-public class EveCorpApp {
-
-    public static void main(String[] args) {
-        SpringApplication.run(EveCorpApp.class,args);
-    }
+@Mapper
+public interface GoodsBuyLogMapper extends BasicMapper<GoodsBuyLog> {
 }
