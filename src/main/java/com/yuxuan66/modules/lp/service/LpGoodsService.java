@@ -45,6 +45,7 @@ import javax.annotation.Resource;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * LP商品服务
@@ -117,6 +118,39 @@ public class LpGoodsService {
         }
 
         return PageEntity.success(goodsBuyLogMapper.selectPage(buyLogQuery.getPage(), queryWrapper));
+    }
+
+
+    /**
+     * 批量删除LP商品
+     * @param ids id列表
+     * @return 标准返回
+     */
+    public RespEntity del(Set<Long> ids) {
+        lpGoodsMapper.deleteBatchIds(ids);
+        return RespEntity.SUCCESS;
+    }
+
+    /**
+     * LP商品新增或修改
+     * @param lpGoods lp商品信息
+     * @return 标准返回
+     */
+    public RespEntity addOrEdit(LpGoods lpGoods){
+
+        if(lpGoods.getId()!=null){
+            lpGoodsMapper.updateById(lpGoods);
+        }else{
+            lpGoods.setShopNum(0);
+            User loginUser = StpEx.getLoginUser();
+            lpGoods.setCreateBy(loginUser.getNickName());
+            lpGoods.setCreateId(loginUser.getId());
+            lpGoods.setCreateTime(Lang.getTime());
+            lpGoodsMapper.insert(lpGoods);
+        }
+
+        return RespEntity.success();
+
     }
 
     /**
@@ -204,6 +238,8 @@ public class LpGoodsService {
                 lpLog.setLp(useLP);
                 lpLog.setCreateBy(account.getName());
                 lpLog.setCreateId(account.getId());
+                lpLog.setAccountId(account.getId());
+                lpLog.setUserId(account.getUserId());
                 lpLogMapper.insert(lpLog);
                 needLP -= useLP;
 
@@ -215,7 +251,7 @@ public class LpGoodsService {
         String subject = "有人兑换DKP了,快滚去处理";
         String sendHtml = "<h1 style='color:red'>兑换角色:" + userAccount.getName() + "物品名称:" + lpGoods.getTitle() + ",DKP数量:" + (lpGoods.getLp() * buyGoodsDto.getNum()) + "</h1>";
         for (String to : systemConfig.getEveManagerMail()) {
-            // asyncMail.send(to, subject, sendHtml);
+            asyncMail.send(to, subject, sendHtml);
         }
 
 
@@ -260,6 +296,9 @@ public class LpGoodsService {
                     newLpLog.setLp(lpLog.getLp());
                     newLpLog.setCreateBy(goodsBuyLog.getAccountName());
                     newLpLog.setCreateId(goodsBuyLog.getAccountId());
+                    newLpLog.setAccountId(newLpLog.getAccountId());
+                    newLpLog.setUserId(newLpLog.getUserId());
+
                     lpLogMapper.insert(newLpLog);
                     // 给用户加回LP
                     UserAccount userAccount = userAccountMapper.selectById(lpLog.getCreateId());

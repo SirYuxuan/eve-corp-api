@@ -31,7 +31,7 @@
     </developers>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>8</java.version>
         <mysql.version>8.0.26</mysql.version>
         <jwt.version>3.18.1</jwt.version>
         <eve-esi.version>4.1.0</eve-esi.version>
@@ -42,10 +42,18 @@
         <fastjson.version>1.2.76</fastjson.version>
         <sa-token.version>1.24.0</sa-token.version>
         <javax-mail.version>1.6.2</javax-mail.version>
+        <aio-core.version>1.5.6</aio-core.version>
     </properties>
 
     <dependencies>
 
+
+        <!-- Socket Lib -->
+        <dependency>
+            <groupId>org.smartboot.socket</groupId>
+            <artifactId>aio-core</artifactId>
+            <version>${aio-core.version}</version>
+        </dependency>
 
         <!-- Mail Util -->
         <dependency>
@@ -131,6 +139,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-quartz</artifactId>
         </dependency>
 
         <!-- redis cache -->

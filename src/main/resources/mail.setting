@@ -1,0 +1,6 @@
+host = smtp.yuxuan66.com
+user = yuxuan@yuxuan66.com
+from = yuxuan@yuxuan66.com
+pass = Yuxuan2012
+port = 465
+sslEnable = true

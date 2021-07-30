@@ -48,6 +48,14 @@ public class LpLog implements Serializable {
      */
     private Long lp;
     /**
+     * 角色ID
+     */
+    private Long accountId;
+    /**
+     * 用户ID
+     */
+    private Long userId;
+    /**
      * 1=PAP自动转换,2=手动发放,3=用户转账，4=兑换商品,5=兑换退款,6=物品兑换
      */
     private Integer source;

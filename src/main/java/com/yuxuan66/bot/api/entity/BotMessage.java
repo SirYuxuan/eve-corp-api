@@ -16,59 +16,34 @@
  * You should have received a copy of the GNU General Public License
  * along with Sir丶雨轩/eve-corp-api.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.yuxuan66.modules.user.entity;
+package com.yuxuan66.bot.api.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.Serializable;
-import java.sql.Timestamp;
+import java.util.List;
 
 /**
- * 军团用户表(CorpUser)实体类
- *
+ * 机器人消息体
  * @author Sir丶雨轩
- * @since 2021-07-27 09:13:50
+ * @since 2021/7/30
  */
 @Setter
 @Getter
-@TableName("corp_user")
-public class User implements Serializable {
+public class BotMessage {
 
-    private Long id;
-    private String uuid;
     /**
-     * 昵称
+     * 发送来源群
      */
-    private String nickName;
+    private Long group;
     /**
-     * QQ号
+     * 发送来源QQ
      */
-    private String qq;
+    private Long qq;
+
     /**
-     * 邮箱
+     * 消息内容
      */
-    private String email;
-    /**
-     * 是否是管理员
-     */
-    private Boolean isAdmin;
-    /**
-     * 最后登录时间
-     */
-    private Timestamp lastTime;
-    /**
-     * 最后登录IP
-     */
-    private String lastIp;
-    /**
-     * 最后登录城市
-     */
-    private String lastCity;
-    /**
-     * 创建时间
-     */
-    private Timestamp createTime;
+    List<BotMessageData> messageDataList;
 
 }

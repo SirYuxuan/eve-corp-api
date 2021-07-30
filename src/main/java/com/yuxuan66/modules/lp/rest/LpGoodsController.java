@@ -28,6 +28,8 @@ import com.yuxuan66.support.basic.http.PageEntity;
 import com.yuxuan66.support.basic.http.RespEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Set;
+
 /**
  * @author Sir丶雨轩
  * @since 2021/7/27
@@ -83,5 +85,25 @@ public class LpGoodsController {
     @PostMapping(path = "/exchangeApproval")
     public RespEntity exchangeApproval(@RequestBody ExchangeApprovalDto exchangeApprovalDto){
         return lpGoodsService.exchangeApproval(exchangeApprovalDto);
+    }
+
+    /**
+     * LP商品新增或修改
+     * @param lpGoods lp商品信息
+     * @return 标准返回
+     */
+    @PostMapping
+    public RespEntity addOrEdit(@RequestBody LpGoods lpGoods){
+        return lpGoodsService.addOrEdit(lpGoods);
+    }
+
+    /**
+     * 批量删除LP商品
+     * @param ids id列表
+     * @return 标准返回
+     */
+    @DeleteMapping
+    public RespEntity del(@RequestBody Set<Long> ids) {
+        return lpGoodsService.del(ids);
     }
 }

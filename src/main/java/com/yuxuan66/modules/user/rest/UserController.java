@@ -19,9 +19,16 @@
 package com.yuxuan66.modules.user.rest;
 
 import com.yuxuan66.modules.user.entity.User;
+import com.yuxuan66.modules.user.entity.UserAccount;
+import com.yuxuan66.modules.user.mapper.UserAccountMapper;
 import com.yuxuan66.modules.user.service.UserService;
+import com.yuxuan66.support.basic.BasicQuery;
+import com.yuxuan66.support.basic.http.PageEntity;
 import com.yuxuan66.support.basic.http.RespEntity;
+import com.yuxuan66.support.esi.EsiApi;
 import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
 
 /**
  * 用户控制器
@@ -33,6 +40,10 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    @Resource
+    private EsiApi esiApi;
+    @Resource
+    private UserAccountMapper userAccountMapper;
 
     public UserController(UserService userService) {
         this.userService = userService;
@@ -69,6 +80,15 @@ public class UserController {
     }
 
     /**
+     * 查询系统内所有的角色，分页
+     * @return 角色列表
+     */
+    @GetMapping(path = "/listAllAccount")
+    public PageEntity listAllAccount(BasicQuery<UserAccount> basicQuery) {
+        return userService.listAllAccount(basicQuery);
+    }
+
+    /**
      * 修改当前账户的信息
      * @param resources 账户信息
      * @return 标准返回
@@ -77,4 +97,5 @@ public class UserController {
     public RespEntity saveInfo(@RequestBody User resources) {
         return userService.saveInfo(resources);
     }
+
 }

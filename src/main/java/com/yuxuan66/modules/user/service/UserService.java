@@ -26,6 +26,8 @@ import com.yuxuan66.modules.user.entity.UserAccount;
 import com.yuxuan66.modules.user.entity.dto.UserInfoDto;
 import com.yuxuan66.modules.user.mapper.UserAccountMapper;
 import com.yuxuan66.modules.user.mapper.UserMapper;
+import com.yuxuan66.support.basic.BasicQuery;
+import com.yuxuan66.support.basic.http.PageEntity;
 import com.yuxuan66.support.basic.http.RespEntity;
 import org.springframework.stereotype.Service;
 
@@ -109,23 +111,53 @@ public class UserService {
     }
 
     /**
-     * 获取当前登录账号的所有角色
+     * 查询系统所有的角色列表,分页查询
+     *
      * @return 角色列表
      */
-    public List<UserAccount> getLoginAccount(){
+    public PageEntity listAllAccount(BasicQuery<UserAccount> basicQuery) {
+        basicQuery.processingBlurry("name");
+
+        if (!basicQuery.getIsLimit()) {
+            return PageEntity.success(userAccountMapper.selectList(null));
+        }
+
+        return PageEntity.success(userAccountMapper.selectPage(basicQuery.getPage(), basicQuery.getQueryWrapper()));
+    }
+
+    /**
+     * 获取当前登录账号的所有角色
+     *
+     * @return 角色列表
+     */
+    public List<UserAccount> getLoginAccount() {
         return userAccountMapper.selectList(new QueryWrapper<UserAccount>().eq("user_id", StpEx.getLoginUser().getId()).orderByDesc("is_main"));
     }
 
     /**
      * 修改当前账户的信息
+     *
      * @param resources 账户信息
      * @return 标准返回
      */
-    public RespEntity saveInfo(User resources){
+    public RespEntity saveInfo(User resources) {
         resources.setId(StpEx.getLoginUser().getId());
         userMapper.updateById(resources);
         return RespEntity.success();
     }
 
+
+    /**
+     * 获取一个用户的主角色
+     * @param userId 用户id
+     * @return 主角色
+     */
+    public UserAccount getMailAccount(Long userId) {
+        List<UserAccount> userAccountList = userAccountMapper.selectList(new QueryWrapper<UserAccount>().eq("user_id", userId).eq("is_main", true));
+        if (userAccountList.isEmpty()) {
+            return null;
+        }
+        return userAccountList.get(0);
+    }
 
 }

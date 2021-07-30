@@ -86,6 +86,18 @@ public class UserAccount implements Serializable {
      */
     private Long skill;
     /**
+     * 技能到期中文名字
+     */
+    private String skillName;
+    /**
+     * 技能英文名字
+     */
+    private String skillEnName;
+    /**
+     * 技能学习到期事件
+     */
+    private Timestamp skillEndTime;
+    /**
      * LP当前数量
      */
     private Long lpNow;

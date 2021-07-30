@@ -24,12 +24,22 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.URLUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.auth0.jwt.JWT;
+import com.yuxuan66.cache.modules.EveCache;
+import com.yuxuan66.modules.user.entity.UserAccount;
+import com.yuxuan66.modules.user.mapper.UserAccountMapper;
 import com.yuxuan66.support.config.SystemConfig;
 import com.yuxuan66.support.esi.entity.EsiAccountInfo;
+import com.yuxuan66.support.esi.entity.EsiMail;
 import com.yuxuan66.support.esi.entity.EsiTokenInfo;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,10 +53,15 @@ import java.util.Map;
 @Component
 public class EsiApi {
 
-    private final SystemConfig systemConfig;
+    @Resource
+    private UserAccountMapper userAccountMapper;
 
-    public EsiApi(SystemConfig systemConfig) {
+    private final SystemConfig systemConfig;
+    private final EveCache eveCache;
+
+    public EsiApi(SystemConfig systemConfig, EveCache eveCache) {
         this.systemConfig = systemConfig;
+        this.eveCache = eveCache;
     }
 
     /**
@@ -68,6 +83,7 @@ public class EsiApi {
 
     /**
      * 通过授权后的Code换取Info信息
+     *
      * @param code 授权后的Code
      * @return token信息
      */
@@ -107,6 +123,7 @@ public class EsiApi {
 
     /**
      * 获取一个角色的权限
+     *
      * @param characterId 角色ID
      * @param accessToken token
      * @return 角色列表
@@ -120,6 +137,7 @@ public class EsiApi {
 
     /**
      * 获取一个角色的详细信息
+     *
      * @param characterId 角色ID
      * @param accessToken Token信息
      * @return 角色详细信息
@@ -147,5 +165,141 @@ public class EsiApi {
         return accountInfo;
     }
 
+    /**
+     * 刷新指定角色的Token
+     *
+     * @param userAccount 角色
+     */
+    public void refreshToken(UserAccount userAccount) {
+
+        if (userAccount.getAccessToken() == null) {
+            return;
+        }
+
+        // token 过期时间
+        long exp = JWT.decode(userAccount.getAccessToken()).getClaims().get("exp").asLong();
+
+        if (exp < System.currentTimeMillis() / 1000) {
+            HttpRequest request = HttpUtil.createPost("https://login.eveonline.com/v2/oauth/token");
+            request.form("grant_type", "refresh_token");
+            request.form("refresh_token", userAccount.getRefreshToken());
+            request.header("Authorization", "Basic " + Base64.encode(systemConfig.getEveEsiClientId() + ":" + systemConfig.getEveEsiSecretKey()));
+            JSONObject tokenInfo = JSONObject.parseObject(request.execute().body());
+            userAccount.setAccessToken(tokenInfo.getString("access_token"));
+            userAccount.setRefreshToken(tokenInfo.getString("refresh_token"));
+            userAccountMapper.updateById(userAccount);
+        }
+    }
+
+
+    /**
+     * 邮件发送
+     *
+     * @param form 发送人
+     * @param to   接收人
+     */
+    @Async
+    public void sendMail(UserAccount form, UserAccount to, String title, String body) {
+        try {
+            refreshToken(form);
+
+            String url = "https://esi.evetech.net/latest/characters/" + form.getCharacterId() + "/mail/?datasource=tranquility";
+            HttpRequest request = HttpRequest.post(url);
+            request.header("Authorization", "Bearer " + form.getAccessToken());
+            EsiMail esiMail = new EsiMail();
+            esiMail.setBody(body);
+            esiMail.setSubject(title);
+            EsiMail.Recipients recipients = new EsiMail.Recipients();
+            recipients.setRecipient_id(Convert.toInt(to.getCharacterId()));
+
+            esiMail.setRecipients(new ArrayList<EsiMail.Recipients>() {{
+                add(recipients);
+            }});
+
+
+            request.body(JSONObject.toJSONString(esiMail));
+            request.execute().body();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * 设置一个角色的ISK余额并更新
+     *
+     * @param userAccount 角色
+     * @return isk余额
+     */
+    public void setIskBalance(UserAccount userAccount) {
+        refreshToken(userAccount);
+        HttpRequest request = HttpUtil.createGet("https://esi.evetech.net/latest/characters/" + userAccount.getCharacterId() + "/wallet/");
+        request.header("Authorization", "Bearer " + userAccount.getAccessToken());
+        Long isk = Convert.toLong(request.execute().body(), 0L);
+        userAccount.setIsk(isk);
+        userAccountMapper.updateById(userAccount);
+    }
+
+    /**
+     * 设置一个角色的技能点数量
+     *
+     * @param userAccount 角色
+     */
+    public void setSkillNum(UserAccount userAccount) {
+        refreshToken(userAccount);
+        HttpRequest request = HttpUtil.createGet("https://esi.evetech.net/latest/characters/" + userAccount.getCharacterId() + "/skills/");
+        request.header("Authorization", "Bearer " + userAccount.getAccessToken());
+        JSONObject info = JSONObject.parseObject(request.execute().body());
+        userAccount.setSkill(info.getLongValue("total_sp"));
+        userAccountMapper.updateById(userAccount);
+    }
+
+    /**
+     * 设置一个角色的技能信息
+     *
+     * @param userAccount 角色
+     */
+    public void setSkillInfo(UserAccount userAccount) {
+        refreshToken(userAccount);
+        HttpRequest request = HttpUtil.createGet("https://esi.evetech.net/latest/characters/" + userAccount.getCharacterId() + "/skillqueue/");
+        request.header("Authorization", "Bearer " + userAccount.getAccessToken());
+        String body = request.execute().body();
+        if(!JSONUtil.isJsonArray(body)){
+            userAccount.setSkillName("角色授权异常");
+            return;
+        }
+        JSONArray info = JSONObject.parseArray(body);
+
+        if (info.isEmpty()) {
+            userAccount.setSkillName("队列中无技能");
+            return;
+        }
+        userAccount.setSkillEndTime(info.getJSONObject(info.size() - 1).getTimestamp("finish_date"));
+
+        request = HttpUtil.createGet("https://esi.evetech.net/dev/universe/names/?datasource=tranquility");
+        request.header("Authorization", "Bearer " + userAccount.getAccessToken());
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.add(info.getJSONObject(0).getString("skill_id"));
+        request.body(jsonArray.toJSONString());
+        JSONArray info1 = JSONObject.parseArray(request.execute().body());
+
+        Map<String, Object> nameMapping = eveCache.getChineseToEnglishName();
+
+        String skillZhName = "无法翻译";
+
+        for (Object key : nameMapping.keySet()) {
+            String zhName = Convert.toStr(key);
+            String enName = Convert.toStr(nameMapping.get(key));
+            if (enName.equals(info1.getJSONObject(0).getString("name"))) {
+                skillZhName = zhName;
+                break;
+            }
+        }
+
+
+        userAccount.setSkillName(skillZhName + " " + info.getJSONObject(0).getString("finished_level"));
+        userAccount.setSkillEnName((info1.getJSONObject(0).getString("name") + " " + info.getJSONObject(0).getString("finished_level")));
+        userAccountMapper.updateById(userAccount);
+    }
 
 }

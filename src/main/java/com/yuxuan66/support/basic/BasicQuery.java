@@ -33,6 +33,8 @@ import lombok.Setter;
 public class BasicQuery<T> {
 
 
+
+    private Boolean isLimit = true;
     private String blurry;
     private String sort;
 

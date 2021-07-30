@@ -18,11 +18,13 @@
  */
 package com.yuxuan66.modules.lp.rest;
 
+import com.yuxuan66.modules.lp.entity.LpLog;
+import com.yuxuan66.modules.lp.entity.dto.SendLPDto;
 import com.yuxuan66.modules.lp.service.LpLogService;
+import com.yuxuan66.support.basic.BasicQuery;
+import com.yuxuan66.support.basic.http.PageEntity;
 import com.yuxuan66.support.basic.http.RespEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * LP日志控制器
@@ -46,6 +48,26 @@ public class LpLogController {
     @GetMapping(path = "/top10")
     public RespEntity top10(){
         return lpLogService.top10();
+    }
+
+    /**
+     * 分页查询lp获取日志
+     * @param basicQuery 查询参数
+     * @return 标准分页
+     */
+    @GetMapping
+    public PageEntity list(BasicQuery<LpLog> basicQuery){
+        return lpLogService.list(basicQuery);
+    }
+
+    /**
+     * 批量发放LP
+     * @param sendLPDto LP发放信息
+     * @return 标准返回
+     */
+    @PostMapping(path = "/sendLP")
+    public RespEntity sendLP(@RequestBody SendLPDto sendLPDto){
+        return lpLogService.sendLP(sendLPDto);
     }
 
 
