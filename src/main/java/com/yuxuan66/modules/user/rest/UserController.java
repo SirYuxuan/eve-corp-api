@@ -58,6 +58,15 @@ public class UserController {
         return userService.info();
     }
 
+    /**
+     * 拉取更新所有人的技能信息
+     * @return 标准返回
+     */
+    @GetMapping(path = "/pullSkill")
+    public RespEntity pullSkill() {
+        return userService.pullSkill();
+    }
+
 
     /**
      * 个人中心信息查询

@@ -16,19 +16,37 @@
  * You should have received a copy of the GNU General Public License
  * along with Sir丶雨轩/eve-corp-api.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.yuxuan66.cache;
+
+
+package com.yuxuan66.modules.skill.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.Serializable;
 
 /**
- * 系统所有缓存的Key
+ * 技能组需要的技能详情(CorpSkillDetail)实体类
  *
  * @author Sir丶雨轩
- * @since 2021/7/30
+ * @since 2021-08-02 11:12:12
  */
-public class CacheKey {
+@Setter
+@Getter
+@TableName("corp_skill_detail")
+public class SkillDetail implements Serializable {
 
-    public static final String CACHE_EVE_ITEM_NAME_LIST = "EVE_ITEM_NAME_LIST";
-    public static final String CACHE_EVE_CHINESE_TO_ENGLISH_NAME = "EVE_CHINESE_TO_ENGLISH_NAME_MAP";
-    public static final String CACHE_EVE_ENGLISH_TO_CHINESE_NAME = "EVE_ENGLISH_TO_CHINESE_NAME_MAP";
+    private Long id;
+
+    private Long groupId;
+
+    private String skillName;
+
+    private Integer skillLevel;
+
+    private Integer skillId;
+
 
 
 }

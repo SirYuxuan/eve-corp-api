@@ -47,4 +47,6 @@ public class QQGroupController {
     public RespEntity all(){
         return qqGroupService.all();
     }
+
+
 }

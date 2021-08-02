@@ -28,13 +28,19 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.auth0.jwt.JWT;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.yuxuan66.cache.modules.EveCache;
+import com.yuxuan66.common.utils.Lang;
+import com.yuxuan66.modules.eve.entity.EveItemName;
+import com.yuxuan66.modules.skill.entity.UserSkill;
+import com.yuxuan66.modules.skill.mapper.UserSkillMapper;
 import com.yuxuan66.modules.user.entity.UserAccount;
 import com.yuxuan66.modules.user.mapper.UserAccountMapper;
 import com.yuxuan66.support.config.SystemConfig;
 import com.yuxuan66.support.esi.entity.EsiAccountInfo;
 import com.yuxuan66.support.esi.entity.EsiMail;
 import com.yuxuan66.support.esi.entity.EsiTokenInfo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -50,11 +56,14 @@ import java.util.Map;
  * @author Sir丶雨轩
  * @since 2021/7/27
  */
+@Slf4j
 @Component
 public class EsiApi {
 
     @Resource
     private UserAccountMapper userAccountMapper;
+    @Resource
+    private UserSkillMapper userSkillMapper;
 
     private final SystemConfig systemConfig;
     private final EveCache eveCache;
@@ -199,7 +208,7 @@ public class EsiApi {
      * @param to   接收人
      */
     @Async
-    public void sendMail(UserAccount form, UserAccount to, String title, String body) {
+    public void sendMail(UserAccount form, List<UserAccount> to, String title, String body) {
         try {
             refreshToken(form);
 
@@ -209,16 +218,20 @@ public class EsiApi {
             EsiMail esiMail = new EsiMail();
             esiMail.setBody(body);
             esiMail.setSubject(title);
-            EsiMail.Recipients recipients = new EsiMail.Recipients();
-            recipients.setRecipient_id(Convert.toInt(to.getCharacterId()));
+            List<EsiMail.Recipients> recipientsList = new ArrayList<>();
 
-            esiMail.setRecipients(new ArrayList<EsiMail.Recipients>() {{
-                add(recipients);
-            }});
+            for (UserAccount userAccount : to) {
+                EsiMail.Recipients recipients = new EsiMail.Recipients();
+                recipients.setRecipient_id(Convert.toInt(userAccount.getCharacterId()));
+                recipientsList.add(recipients);
+            }
+
+            esiMail.setRecipients(recipientsList);
 
 
             request.body(JSONObject.toJSONString(esiMail));
-            request.execute().body();
+            String body1 = request.execute().body();
+            System.out.println(body1);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -264,7 +277,7 @@ public class EsiApi {
         HttpRequest request = HttpUtil.createGet("https://esi.evetech.net/latest/characters/" + userAccount.getCharacterId() + "/skillqueue/");
         request.header("Authorization", "Bearer " + userAccount.getAccessToken());
         String body = request.execute().body();
-        if(!JSONUtil.isJsonArray(body)){
+        if (!JSONUtil.isJsonArray(body)) {
             userAccount.setSkillName("角色授权异常");
             return;
         }
@@ -300,6 +313,70 @@ public class EsiApi {
         userAccount.setSkillName(skillZhName + " " + info.getJSONObject(0).getString("finished_level"));
         userAccount.setSkillEnName((info1.getJSONObject(0).getString("name") + " " + info.getJSONObject(0).getString("finished_level")));
         userAccountMapper.updateById(userAccount);
+    }
+
+    /**
+     * 设置一个角色的技能列表
+     */
+    public Map<String, Integer> setSkillList(UserAccount userAccount, boolean isId) {
+        refreshToken(userAccount);
+
+        String url = "https://esi.evetech.net/latest/characters/" + userAccount.getCharacterId() + "/skills/?datasource=tranquility";
+
+        HttpRequest request = HttpUtil.createGet(url);
+        request.header("Authorization", "Bearer " + userAccount.getAccessToken());
+        String body = "";
+        for (int i = 0; i < 5; i++) {
+            try{
+                body = request.execute().body();
+            }catch (Exception e){
+                log.info("ESI调用失败："+e.getMessage());
+                body = "";
+            }
+        }
+
+        if(StrUtil.isBlank(body) || !JSONUtil.isJson(body)){
+            return null;
+        }
+
+        JSONArray skill = JSONObject.parseObject(body).getJSONArray("skills");
+
+        List<EveItemName> itemNameList = eveCache.getEveItemName();
+
+        Map<Integer, String> chineseName = new HashMap<>();
+        Map<Integer, String> englishName = new HashMap<>();
+
+        itemNameList.stream().filter(item -> item.getType().equals(8)).forEach(item -> {
+            chineseName.put(item.getItemId(), item.getZhName());
+            englishName.put(item.getItemId(), item.getEnName());
+        });
+
+
+        Map<String, Integer> result = new HashMap<>();
+        if(skill == null){
+            return null;
+        }
+
+        userSkillMapper.delete(new QueryWrapper<UserSkill>().eq("account_id",userAccount.getId()));
+
+        for (int i = 0; i < skill.size(); i++) {
+            JSONObject info = skill.getJSONObject(i);
+            Integer skillId = info.getInteger("skill_id");
+            Integer skillLevel = info.getInteger("active_skill_level");
+
+            UserSkill userSkill = new UserSkill();
+            userSkill.setSkillLevel(skillLevel);
+            userSkill.setSkillName(englishName.get(skillId));
+            userSkill.setSkillZhName(chineseName.get(skillId));
+            userSkill.setSkillId(skillId);
+            userSkill.setCharacterId(userAccount.getCharacterId());
+            userSkill.setAccountId(userAccount.getId());
+            userSkill.setCreateTime(Lang.getTime());
+            userSkill.setName(userAccount.getName());
+            userSkillMapper.insert(userSkill);
+            result.put(isId ? Convert.toStr(skillId) : userSkill.getSkillName(), skillLevel);
+        }
+        return result;
     }
 
 }

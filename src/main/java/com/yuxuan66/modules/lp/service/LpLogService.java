@@ -36,7 +36,9 @@ import com.yuxuan66.support.esi.EsiApi;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -62,15 +64,15 @@ public class LpLogService {
         this.esiApi = esiApi;
     }
 
-    public PageEntity list(BasicQuery<LpLog> basicQuery){
-        basicQuery.processingBlurry("character_name","content");
+    public PageEntity list(BasicQuery<LpLog> basicQuery) {
+        basicQuery.processingBlurry("character_name", "content");
         QueryWrapper<LpLog> queryWrapper = basicQuery.getQueryWrapper();
         User loginUser = StpEx.getLoginUser();
         if (!loginUser.getIsAdmin()) {
             queryWrapper.eq("user_id", loginUser.getId());
         }
-
-        return PageEntity.success(lpLogMapper.selectPage(basicQuery.getPage(),queryWrapper));
+        queryWrapper.orderByDesc("create_time");
+        return PageEntity.success(lpLogMapper.selectPage(basicQuery.getPage(), queryWrapper));
     }
 
     /**
@@ -97,9 +99,12 @@ public class LpLogService {
 
         UserAccount formAccount = userService.getMailAccount(user.getId());
 
+        List<UserAccount> userAccountList = new ArrayList<>();
+
         for (Long id : sendLPDto.getUserList()) {
             UserAccount userAccount = userAccountMapper.selectById(id);
 
+            userAccountList.add(userAccount);
             if (userAccount == null) {
                 continue;
             }
@@ -121,8 +126,29 @@ public class LpLogService {
             lpLog.setUserId(userAccount.getUserId());
             lpLogMapper.insert(lpLog);
 
-            esiApi.sendMail(formAccount, userAccount, DateUtil.today() + " LP发放完成.", "<font size=‘15’ color='#b3ffffff'>" + userAccount.getName() + ",您好</font>\r\n   您的LP已经发放，本次发放数量" + sendLPDto.getNum() + "LP，原因：" + sendLPDto.getWhere() + "\r\n您当前剩余LP：" + userAccount.getLpNow() + "LP");
 
+        }
+
+        if (userAccountList.size() > 50) {
+            // 开始分割
+            new Thread(() -> {
+                for (int i = 0; i < userAccountList.size() / 50 + 1; i++) {
+                    int endSize = (i + 1) * 50;
+                    if (endSize > userAccountList.size()) {
+                        endSize = userAccountList.size();
+                    }
+                    List<UserAccount> subList = userAccountList.subList(i * 50, endSize);
+
+
+                    esiApi.sendMail(formAccount, subList, DateUtil.today() + " LP发放完成.", "您好\r\n   您的LP已经发放，本次发放数量" + sendLPDto.getNum() + "LP，原因：" + sendLPDto.getWhere());
+                    try {
+                        Thread.sleep(1000 * 60);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            }).start();
 
         }
 

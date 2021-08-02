@@ -16,19 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with Sir丶雨轩/eve-corp-api.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.yuxuan66.cache;
+package com.yuxuan66.modules.skill.mapper;
+
+import com.yuxuan66.modules.skill.entity.SkillDetail;
+import com.yuxuan66.modules.skill.entity.SkillGroup;
+import com.yuxuan66.support.basic.BasicMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 系统所有缓存的Key
- *
  * @author Sir丶雨轩
- * @since 2021/7/30
+ * @since 2021/8/2
  */
-public class CacheKey {
-
-    public static final String CACHE_EVE_ITEM_NAME_LIST = "EVE_ITEM_NAME_LIST";
-    public static final String CACHE_EVE_CHINESE_TO_ENGLISH_NAME = "EVE_CHINESE_TO_ENGLISH_NAME_MAP";
-    public static final String CACHE_EVE_ENGLISH_TO_CHINESE_NAME = "EVE_ENGLISH_TO_CHINESE_NAME_MAP";
-
-
+@Mapper
+public interface SkillDetailMapper extends BasicMapper<SkillDetail> {
 }

@@ -64,7 +64,7 @@ public class EveCenter extends BotApiDispenser {
                 return translate(botMessage);
             } else if (command.startsWith(".kb ") && command.split(" ").length > 1) {
                 return getKB(botMessage);
-            } else if (command.startsWith("jita") || command.startsWith("gjita")) {
+            } else if (command.startsWith("jita ") || command.startsWith("gjita ") || command.startsWith(".col ") || command.startsWith(".gcol ")) {
                 return getPrice(botMessage);
             }
         }
@@ -183,15 +183,32 @@ public class EveCenter extends BotApiDispenser {
 
         String name = ApiHelper.textCommandStr(botMessage).replace(".kb ", "").trim();
 
-        boolean isEur = name.startsWith("jita ");
+        boolean isAll = name.startsWith(".col ") || name.startsWith(".gcol ");
+
+        boolean isEur = name.startsWith("jita ") || name.startsWith(".col ");
 
         name = isEur ? name.substring(5) : name.substring(6);
 
         // 获取是否存在简写库
         List<BotAlias> botAliasList = botAliasMapper.selectList(new QueryWrapper<BotAlias>().eq("alias_name", name));
 
-        if(botAliasList.size() == 1){
+        String enName = "";
+
+        if (botAliasList.size() == 1) {
             name = botAliasList.get(0).getName();
+        } else {
+            // 简写库不存在 尝试翻译
+            Map<String, Object> nameMapping = eveCache.getChineseToEnglishName();
+            if (nameMapping.containsKey(name)) {
+                enName = nameMapping.get(name).toString();
+            } else {
+                for (String key : nameMapping.keySet()) {
+                    if (nameMapping.get(key).toString().equals(name)) {
+                        enName = name;
+                        name = key;
+                    }
+                }
+            }
         }
 
         String url = "https://www.ceve-market.org/api/searchname";
@@ -209,6 +226,9 @@ public class EveCenter extends BotApiDispenser {
 
         StringBuilder sendMessage = new StringBuilder();
 
+        long allBuy = 0;
+        long allSell = 0;
+
         for (int i = 0; i < jsonArray.size(); i++) {
 
             JSONObject jsonObject = jsonArray.getJSONObject(i);
@@ -221,14 +241,35 @@ public class EveCenter extends BotApiDispenser {
             Node sellNode = document.getDocumentElement().getFirstChild().getFirstChild().getChildNodes().item(1);
             String buyMax = buyNode.getChildNodes().item(2).getTextContent();
             String sellMin = sellNode.getChildNodes().item(3).getTextContent();
+            allBuy += Convert.toLong(buyMax);
+            allSell += Convert.toLong(sellMin);
 
-            if ((jsonObject.getString("typename").contains("涂装") && !name.contains("涂装")) ||(jsonObject.getString("typename").contains("蓝图") && !name.contains("蓝图"))) {
+            if ((jsonObject.getString("typename").contains("涂装") && !name.contains("涂装")) || (jsonObject.getString("typename").contains("蓝图") && !name.contains("蓝图"))) {
                 continue;
             }
 
-            sendMessage.append("\r\n").append(jsonObject.getString("typename")).append(" \r\n收单: ").append(NumberUtil.decimalFormat(",###", Convert.toLong(buyMax))).append(" ISK").append(" \r\n卖单: ").append(NumberUtil.decimalFormat(",###", Convert.toLong(sellMin))).append(" ISK\r\n=============");
+            String typeName = jsonObject.getString("typename");
+
+            if (typeName.equals(name) && StrUtil.isNotBlank(enName)) {
+                typeName = name + "===>" + enName;
+            }
+
+            sendMessage.append("\r\n").append(typeName).append(" \r\n收单: ").append(NumberUtil.decimalFormat(",###", Convert.toLong(buyMax))).append(" ISK").append(" \r\n卖单: ").append(NumberUtil.decimalFormat(",###", Convert.toLong(sellMin))).append(" ISK\r\n=============");
+            if (name.equals("伊甸币")) {
+                sendMessage.append("\r\n500*伊甸币价格");
+                sendMessage.append("\r\n收单: ").append(NumberUtil.decimalFormat(",###", Convert.toLong(buyMax)*500)).append(" ISK");
+                sendMessage.append("\r\n卖单: ").append(NumberUtil.decimalFormat(",###", Convert.toLong(sellMin)*500)).append(" ISK");
+                sendMessage.append("\r\n=============");
+
+            }
+        }
+        if (isAll) {
+            sendMessage.append("\r\n全套收单: ").append(NumberUtil.decimalFormat(",###", allBuy)).append(" ISK");
+            sendMessage.append("\r\n全套卖单: ").append(NumberUtil.decimalFormat(",###", allSell)).append(" ISK");
+            sendMessage.append("\r\n=============");
 
         }
+
         return ApiHelper.textAt(botMessage.getQq(), botMessage.getGroup(), sendMessage.toString());
     }
 }

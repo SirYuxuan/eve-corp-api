@@ -61,7 +61,7 @@ public class EveCache {
     }
 
     /**
-     * 获取EVE物品名称 英文到中文的映射
+     * 获取EVE物品名称 中文到英文的映射
      * @return 映射关系
      */
     public Map<String, Object> getChineseToEnglishName() {
@@ -76,6 +76,25 @@ public class EveCache {
             nameMapping.put(eveItemName.getZhName(), eveItemName.getEnName());
         }
         redisUtil.set(CacheKey.CACHE_EVE_CHINESE_TO_ENGLISH_NAME,JSONObject.toJSONString(nameMapping));
+        return nameMapping;
+
+    }
+    /**
+     * 获取EVE物品名称 英文到中文的映射
+     * @return 映射关系
+     */
+    public Map<String, Object> getEnglishToChineseName() {
+        if (redisUtil.hasKey(CacheKey.CACHE_EVE_ENGLISH_TO_CHINESE_NAME)) {
+            return JSONObject.parseObject(Convert.toStr(redisUtil.get(CacheKey.CACHE_EVE_ENGLISH_TO_CHINESE_NAME)));
+        }
+
+        Map<String, Object> nameMapping = new HashMap<>();
+
+        for (EveItemName eveItemName : getEveItemName()) {
+
+            nameMapping.put(eveItemName.getEnName(), eveItemName.getZhName());
+        }
+        redisUtil.set(CacheKey.CACHE_EVE_ENGLISH_TO_CHINESE_NAME,JSONObject.toJSONString(nameMapping));
         return nameMapping;
 
     }

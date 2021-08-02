@@ -95,4 +95,25 @@ public class ApiHelper {
 
         return botMessage;
     }
+
+    /**
+     * 构建返回消息 图片消息
+     *
+     * @param url 图片地址
+     * @return BotMessage
+     */
+    public static BotMessage image(String url) {
+        BotMessage botMessage = new BotMessage();
+
+        botMessage.setMessageDataList(new ArrayList<BotMessageData>() {{
+
+            BotMessageData message = new BotMessageData();
+            message.setType(BotMsgType.IMG);
+            message.setMsg(url);
+            add(message);
+
+        }});
+
+        return botMessage;
+    }
 }

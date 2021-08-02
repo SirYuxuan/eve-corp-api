@@ -29,6 +29,7 @@ import com.yuxuan66.modules.user.mapper.UserMapper;
 import com.yuxuan66.support.basic.BasicQuery;
 import com.yuxuan66.support.basic.http.PageEntity;
 import com.yuxuan66.support.basic.http.RespEntity;
+import com.yuxuan66.support.esi.EsiApi;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -49,6 +50,27 @@ public class UserService {
     private UserMapper userMapper;
     @Resource
     private UserAccountMapper userAccountMapper;
+
+    private final EsiApi esiApi;
+
+    public UserService(EsiApi esiApi) {
+        this.esiApi = esiApi;
+    }
+
+
+    /**
+     * 拉取更新所有人的技能信息
+     * @return 标准返回
+     */
+    public RespEntity pullSkill(){
+
+        for (UserAccount userAccount : userAccountMapper.selectList(null)) {
+            esiApi.setSkillList(userAccount,false);
+        }
+
+        return RespEntity.success();
+    }
+
 
     /**
      * 查询当前登录用户信息

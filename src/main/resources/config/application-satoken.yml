@@ -1,5 +1,5 @@
 sa-token:
-  activity-timeout: 86400
+  activity-timeout: 86400000
   token-style: random-32
   allow-concurrent-login: true
   is-share: false

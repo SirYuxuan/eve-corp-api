@@ -16,19 +16,37 @@
  * You should have received a copy of the GNU General Public License
  * along with Sir丶雨轩/eve-corp-api.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.yuxuan66.cache;
+
+
+package com.yuxuan66.modules.bot.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.Serializable;
 
 /**
- * 系统所有缓存的Key
+ * 表情包(BotEmoticon)实体类
  *
  * @author Sir丶雨轩
- * @since 2021/7/30
+ * @since 2021-07-30 19:54:13
  */
-public class CacheKey {
+@Setter
+@Getter
+@TableName("bot_emoticon")
+public class BotEmoticon implements Serializable {
 
-    public static final String CACHE_EVE_ITEM_NAME_LIST = "EVE_ITEM_NAME_LIST";
-    public static final String CACHE_EVE_CHINESE_TO_ENGLISH_NAME = "EVE_CHINESE_TO_ENGLISH_NAME_MAP";
-    public static final String CACHE_EVE_ENGLISH_TO_CHINESE_NAME = "EVE_ENGLISH_TO_CHINESE_NAME_MAP";
+    private Integer id;
+    /**
+     * 表情包名称
+     */
+    private String name;
+    /**
+     * 表情包ID
+     */
+    private Integer value;
+
 
 
 }

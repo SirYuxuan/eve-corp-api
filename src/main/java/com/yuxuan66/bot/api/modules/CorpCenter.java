@@ -85,11 +85,13 @@ public class CorpCenter extends BotApiDispenser {
     private BotMessage getLP(Long qq, Long group, Long sendQQ) {
 
         List<User> userList = userMapper.selectList(new QueryWrapper<User>().eq("qq", qq));
-        if (userList.isEmpty()) {
+        List<User> sendUserList = userMapper.selectList(new QueryWrapper<User>().eq("qq", sendQQ));
+        if (userList.isEmpty() || sendUserList.isEmpty()) {
             return ApiHelper.textAt(qq, group, (qq.equals(sendQQ) ? "您" : "他") + "没还有注册军团系统。\r\n军团系统地址：http://www.hd-eve.com");
         }
 
-        if (userList.size() > 1) {
+
+        if (userList.size() > 1 || sendUserList.size() > 1) {
             BotMessage botMessage = ApiHelper.textAt(qq, group, "您的用户数据异常，请联系雨轩处理！ ");
 
             List<BotMessageData> botMessageData = botMessage.getMessageDataList();
@@ -102,9 +104,8 @@ public class CorpCenter extends BotApiDispenser {
             return botMessage;
         }
 
-        User user = userList.get(0);
 
-        if (!user.getIsAdmin() && !qq.equals(sendQQ)) {
+        if (!sendUserList.get(0).getIsAdmin() && !qq.equals(sendQQ)) {
             return ApiHelper.textAt(sendQQ, group, "对不起 您无权查询别人的LP.");
         }
 
@@ -176,7 +177,7 @@ public class CorpCenter extends BotApiDispenser {
         for (UserAccount userAccount : userAccountList) {
             result.append(userAccount.getName()).append(":\r\n");
 
-            if(StrUtil.isBlank(userAccount.getAccessToken())){
+            if (StrUtil.isBlank(userAccount.getAccessToken())) {
                 result.append("当前角色授权丢失,请重新授权\r\n");
                 continue;
             }
@@ -186,16 +187,15 @@ public class CorpCenter extends BotApiDispenser {
             esiApi.setSkillInfo(userAccount);
 
 
-
             result.append("LP数: ").append(userAccount.getLpNow()).append("\r\n");
             result.append("技能点数: ").append(NumberUtil.decimalFormat(",###", userAccount.getSkill())).append("\r\n");
             result.append("ISK: ").append(NumberUtil.decimalFormat(",###", userAccount.getIsk() / 1000000)).append("M ISK\r\n");
             result.append("当前学习技能: ").append(userAccount.getSkillName()).append("\r\n");
             result.append("技能队列结束时间: ").append(userAccount.getSkillEndTime()).append("\r\n");
 
-            lp = userAccount.getLpNow();
-            skill = userAccount.getSkill();
-            isk = userAccount.getIsk();
+            lp += userAccount.getLpNow();
+            skill += userAccount.getSkill();
+            isk += userAccount.getIsk();
         }
 
         result.append("===============\r\n总资产:\r\n");
@@ -205,6 +205,6 @@ public class CorpCenter extends BotApiDispenser {
         result.append("ISK: ").append(NumberUtil.decimalFormat(",###", isk / 1000000)).append("M ISK\r\n");
 
 
-        return ApiHelper.textAt(botMessage.getQq(),botMessage.getGroup(),result.toString());
+        return ApiHelper.textAt(botMessage.getQq(), botMessage.getGroup(), result.toString());
     }
 }

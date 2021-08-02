@@ -18,6 +18,8 @@
  */
 package com.yuxuan66.job;
 
+import cn.hutool.extra.spring.SpringUtil;
+import com.yuxuan66.modules.user.service.UserService;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -29,6 +31,5 @@ import org.quartz.JobExecutionException;
 public class TestJob  implements Job {
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-        System.out.println("任务已被执行");
     }
 }
