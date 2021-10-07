@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yuxuan66.modules.luck.mapper.LuckDrawMapper">
+
+
+    <resultMap type="com.yuxuan66.modules.luck.entity.LuckDraw" id="luckDraw">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="type" property="type"/>
+        <result column="pic" property="pic"/>
+        <result column="address" property="address"/>
+        <result column="node_num" property="nodeNum"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="create_by" property="createBy"/>
+        <result column="win_user_id" property="winUserId"/>
+        <result column="win_user_name" property="winUserName"/>
+        <result column="win_no" property="winNo"/>
+        <result column="win_account_id" property="winAccountId"/>
+        <result column="win_account_name" property="winAccountName"/>
+        <result column="status" property="status"/>
+        <result column="content" property="content"/>
+
+        <collection property="luckDrawNodes" ofType="com.yuxuan66.modules.luck.entity.LuckDrawNode">
+            <id column="nId" property="id"/>
+            <result column="no" property="no"/>
+            <result column="uid" property="uid"/>
+            <result column="account_id" property="accountId"/>
+            <result column="nName" property="name"/>
+            <result column="win" property="win"/>
+            <result column="pay_time" property="payTime"/>
+            <association property="userAccount" javaType="com.yuxuan66.modules.user.entity.UserAccount">
+                <id column="uId" property="id"/>
+                <result column="uName" property="name"/>
+                <result column="character_id" property="characterId"/>
+            </association>
+        </collection>
+
+    </resultMap>
+
+    <select id="findLuckById" resultMap="luckDraw">
+        select ld.*,ldn.id as nId,ldn.*,ua.*,ua.id as uId,ldn.name as nName,ua.name as uName
+        from corp_luck_draw ld
+                 LEFT JOIN corp_luck_draw_node ldn on ld.id = ldn.luck_draw_id
+                 LEFT JOIN corp_user_account ua on ldn.account_id = ua.id
+        where ld.id = #{id}
+    </select>
+
+</mapper>

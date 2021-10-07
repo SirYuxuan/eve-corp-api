@@ -18,8 +18,6 @@
  */
 package com.yuxuan66.job;
 
-import cn.hutool.extra.spring.SpringUtil;
-import com.yuxuan66.modules.user.service.UserService;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;

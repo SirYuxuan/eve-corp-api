@@ -32,6 +32,7 @@ import java.util.ArrayList;
  */
 public class ApiHelper {
 
+
     /**
      * 判断消息是否是纯文本命令
      *
@@ -86,6 +87,29 @@ public class ApiHelper {
                 add(at);
             }
 
+            BotMessageData message = new BotMessageData();
+            message.setType(BotMsgType.TEXT);
+            message.setMsg(" " + msg);
+            add(message);
+
+        }});
+
+        return botMessage;
+    }
+    /**
+     * 构建返回消息 普通文本
+     *
+     * @param group 发送到的群
+     * @param qq    @的qq
+     * @param msg   消息内容
+     * @return BotMessage
+     */
+    public static BotMessage text(Long qq, Long group, String msg) {
+        BotMessage botMessage = new BotMessage();
+        botMessage.setGroup(group);
+        botMessage.setQq(qq);
+
+        botMessage.setMessageDataList(new ArrayList<BotMessageData>() {{
             BotMessageData message = new BotMessageData();
             message.setType(BotMsgType.TEXT);
             message.setMsg(" " + msg);

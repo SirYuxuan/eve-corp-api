@@ -284,7 +284,7 @@ public class LpGoodsService {
 
             if (exchangeApprovalDto.getStatus() == 3) {
                 // 审批失败,退回LP
-                List<LpLog> lpLogList = lpLogMapper.selectList(new QueryWrapper<LpLog>().eq("buy_log_id", goodsBuyLog.getId()));
+                List<LpLog> lpLogList = lpLogMapper.selectList(new QueryWrapper<LpLog>().eq("buy_log_id", goodsBuyLog.getId()).ne("source",7).eq("type",1));
 
                 for (LpLog lpLog : lpLogList) {
                     LpLog newLpLog = new LpLog();
@@ -296,8 +296,8 @@ public class LpGoodsService {
                     newLpLog.setLp(lpLog.getLp());
                     newLpLog.setCreateBy(goodsBuyLog.getAccountName());
                     newLpLog.setCreateId(goodsBuyLog.getAccountId());
-                    newLpLog.setAccountId(newLpLog.getAccountId());
-                    newLpLog.setUserId(newLpLog.getUserId());
+                    newLpLog.setAccountId(lpLog.getAccountId());
+                    newLpLog.setUserId(lpLog.getUserId());
 
                     lpLogMapper.insert(newLpLog);
                     // 给用户加回LP

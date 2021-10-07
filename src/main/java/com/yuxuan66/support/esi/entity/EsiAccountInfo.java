@@ -21,6 +21,8 @@ package com.yuxuan66.support.esi.entity;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.sql.Timestamp;
+
 /**
  * Esi 一个角色详细信息
  * @author Sir丶雨轩
@@ -46,5 +48,7 @@ public class EsiAccountInfo {
      * 联盟名称
      */
     private String allianceName;
+
+    private Timestamp joinTime;
 
 }

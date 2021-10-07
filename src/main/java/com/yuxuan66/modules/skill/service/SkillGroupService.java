@@ -41,6 +41,7 @@ import com.yuxuan66.support.esi.EsiApi;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -170,6 +171,37 @@ public class SkillGroupService {
         return RespEntity.success(skillGroupMapper.selectList(queryWrapper));
     }
 
+    /**
+     * 判断用户是否能通过指定技能组检测
+     * @param groupId 技能组id
+     * @param userAccount 用户
+     * @return 结果
+     */
+    public boolean isAtopSkill(Long groupId, UserAccount userAccount) {
+
+
+        List<UserSkill> userSkillList = userSkillMapper.selectList(new QueryWrapper<UserSkill>().eq("account_id",userAccount.getId() ));
+
+
+        Map<String, Integer> userSkill = new HashMap<>();
+        for (UserSkill userSkill1 : userSkillList) {
+            userSkill.put(userSkill1.getSkillZhName(), userSkill1.getSkillLevel());
+        }
+
+        List<SkillDetail> skillDetailList = skillDetailMapper.selectList(new QueryWrapper<SkillDetail>().eq("group_id", groupId));
+
+
+        for (SkillDetail skillDetail : skillDetailList) {
+            int userLevel = skillDetail.getSkillLevel();
+            int nowLevel = userSkill.get(skillDetail.getSkillName()) == null ? 0 : userSkill.get(skillDetail.getSkillName());
+            if (nowLevel < userLevel) {
+                return false;
+            }
+        }
+
+
+        return true;
+    }
 
     /**
      * 技能检查
@@ -180,14 +212,14 @@ public class SkillGroupService {
      */
     public RespEntity checkSkillGroup(Long groupId, Long accountId) {
 
-        UserAccount userAccount = userAccountMapper.selectById(836L);
+        UserAccount userAccount = userAccountMapper.selectById(accountId);
 
-        // Map<String,Integer> userSkill = esiApi.setSkillList(userAccount,false);
-        Map<String, Integer> userSkill = new HashMap<>();
+        Map<String, Integer> userSkill = esiApi.setSkillList(userAccount, false);
+       /* Map<String, Integer> userSkill = new HashMap<>();
 
         for (UserSkill item : userSkillMapper.selectList(new QueryWrapper<UserSkill>().eq("account_id", userAccount.getId()))) {
             userSkill.put(item.getSkillName(), item.getSkillLevel());
-        }
+        }*/
 
 
         List<SkillDetail> skillDetailList = skillDetailMapper.selectList(new QueryWrapper<SkillDetail>().eq("group_id", groupId));
@@ -249,7 +281,7 @@ public class SkillGroupService {
         Map<String, Map<String, Integer>> userSkill = new HashMap<>();
         for (UserSkill userSkill1 : userSkillList) {
 
-            Map<String, Integer> skill = userSkill.get(userSkill1.getSkillName());
+            Map<String, Integer> skill = userSkill.get(userSkill1.getName());
 
             if (skill == null) {
                 skill = new HashMap<>();
@@ -285,8 +317,8 @@ public class SkillGroupService {
             }
             result.add(temp);
 
-
         }
+        result.sort((o1, o2) -> new BigDecimal(Convert.toStr(o1.get("skill").toString().length())).compareTo(new BigDecimal(o2.get("skill").toString().length())));
 
         return RespEntity.success(result);
 

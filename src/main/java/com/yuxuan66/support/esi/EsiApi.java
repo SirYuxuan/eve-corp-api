@@ -38,6 +38,7 @@ import com.yuxuan66.modules.user.entity.UserAccount;
 import com.yuxuan66.modules.user.mapper.UserAccountMapper;
 import com.yuxuan66.support.config.SystemConfig;
 import com.yuxuan66.support.esi.entity.EsiAccountInfo;
+import com.yuxuan66.support.esi.entity.EsiAssets;
 import com.yuxuan66.support.esi.entity.EsiMail;
 import com.yuxuan66.support.esi.entity.EsiTokenInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -151,7 +152,7 @@ public class EsiApi {
      * @param accessToken Token信息
      * @return 角色详细信息
      */
-    public static EsiAccountInfo getAccountInfo(Long characterId, String accessToken) {
+    public EsiAccountInfo getAccountInfo(Long characterId, String accessToken) {
         HttpRequest request = HttpUtil.createGet("https://esi.evetech.net/latest/characters/" + characterId);
         request.header("Authorization", "Bearer " + accessToken);
         JSONObject info = JSONObject.parseObject(request.execute().body());
@@ -160,6 +161,25 @@ public class EsiApi {
 
         accountInfo.setAllianceId(info.getLong("alliance_id"));
         accountInfo.setCorpId(info.getLong("corporation_id"));
+
+        request = HttpUtil.createGet("https://esi.evetech.net/latest/characters/" + characterId + "/corporationhistory/?datasource=tranquility");
+        request.header("Authorization", "Bearer " + accessToken);
+
+        try{
+            JSONArray history = JSONArray.parseArray(request.execute().body());
+            for (int i = 0; i < history.size(); i++) {
+                JSONObject corp = history.getJSONObject(i);
+                if(corp.getInteger("corporation_id").equals(Convert.toInt(accountInfo.getCorpId()))){
+                    accountInfo.setJoinTime(corp.getTimestamp("start_date"));
+                }
+            }
+        }catch (Exception ignored){
+
+        }
+
+
+
+
 
         request = HttpUtil.createGet("https://esi.evetech.net/latest/corporations/" + accountInfo.getCorpId());
         request.header("Authorization", "Bearer " + accessToken);
@@ -316,6 +336,106 @@ public class EsiApi {
     }
 
     /**
+     * 获取个人物资id列表
+     *
+     * @param userAccount 用户
+     * @param page        页面
+     * @return 个人物资
+     */
+    public JSONArray getAssetsIds(UserAccount userAccount, int page) {
+
+        if (StrUtil.isBlank(userAccount.getAccessToken())) {
+            return new JSONArray();
+        }
+
+        HttpRequest request = HttpUtil.createGet("https://esi.evetech.net/latest/characters/" + userAccount.getCharacterId() + "/assets/?datasource=tranquility&page=" + page);
+        request.header("Authorization", "Bearer " + userAccount.getAccessToken());
+        String jsonStr = null;
+        for (int i = 0; i < 5; i++) {
+            try {
+                jsonStr = request.execute().body();
+            } catch (Exception e) {
+                jsonStr = "";
+            }
+        }
+
+        if (StrUtil.isBlank(jsonStr) || !JSONUtil.isJsonArray(jsonStr)) {
+            return new JSONArray();
+        }
+
+        JSONArray result = JSONObject.parseArray(jsonStr);
+        if (result.size() >= 1000) {
+            result.addAll(getAssetsIds(userAccount, page + 1));
+        }
+
+        return result;
+    }
+
+
+    /**
+     * 获取一个用户的资产和对应的数量
+     *
+     * @param userAccount 用户
+     * @return 资产列表
+     */
+    public Map<String, EsiAssets> getAssets(UserAccount userAccount) {
+        refreshToken(userAccount);
+
+        Map<Integer, String> nameMapping = new HashMap<>();
+        eveCache.getEveItemName().stream().filter(item -> item.getType().equals(8)).forEach(item -> {
+            nameMapping.put(item.getItemId(), item.getZhName());
+        });
+        Map<String, EsiAssets> result = new HashMap<>();
+        JSONArray jsonArray = getAssetsIds(userAccount, 1);
+        for (Object o : jsonArray) {
+            JSONObject jsonObject = (JSONObject) o;
+
+            int num = jsonObject.getIntValue("quantity");
+            int itemId = jsonObject.getIntValue("type_id");
+            boolean isBlueprintCopy = Convert.toBool(jsonObject.get("is_blueprint_copy"), false);
+
+
+            String name = nameMapping.get(itemId);
+            if (result.containsKey(name)) {
+                EsiAssets esiAssets = result.get(name);
+                esiAssets.setNum(esiAssets.getNum() + num);
+                result.put(name, esiAssets);
+            } else {
+                EsiAssets esiAssets = new EsiAssets();
+                esiAssets.setNum(num);
+                esiAssets.setBlueprintCopy(isBlueprintCopy);
+                result.put(name, esiAssets);
+            }
+
+
+        }
+        return result;
+    }
+
+    /**
+     * 获取合同
+     *
+     * @param cid
+     * @param accessToken
+     * @param page
+     * @return
+     */
+    public static JSONArray contract(String cid, String accessToken, int page) {
+
+        HttpRequest request = HttpUtil.createGet("https://esi.evetech.net/latest/characters/" + cid + "/contracts/?datasource=tranquility&page=" + page);
+        request.header("Authorization", "Bearer " + accessToken);
+        String jsonStr = request.execute().body();
+
+        JSONArray result = JSONObject.parseArray(jsonStr);
+        if (result.size() >= 1000) {
+            result.addAll(contract(cid, accessToken, page + 1));
+        }
+
+        return result;
+
+    }
+
+    /**
      * 设置一个角色的技能列表
      */
     public Map<String, Integer> setSkillList(UserAccount userAccount, boolean isId) {
@@ -327,15 +447,15 @@ public class EsiApi {
         request.header("Authorization", "Bearer " + userAccount.getAccessToken());
         String body = "";
         for (int i = 0; i < 5; i++) {
-            try{
+            try {
                 body = request.execute().body();
-            }catch (Exception e){
-                log.info("ESI调用失败："+e.getMessage());
+            } catch (Exception e) {
+                log.info("ESI调用失败：" + e.getMessage());
                 body = "";
             }
         }
 
-        if(StrUtil.isBlank(body) || !JSONUtil.isJson(body)){
+        if (StrUtil.isBlank(body) || !JSONUtil.isJson(body)) {
             return null;
         }
 
@@ -353,11 +473,11 @@ public class EsiApi {
 
 
         Map<String, Integer> result = new HashMap<>();
-        if(skill == null){
+        if (skill == null) {
             return null;
         }
 
-        userSkillMapper.delete(new QueryWrapper<UserSkill>().eq("account_id",userAccount.getId()));
+        userSkillMapper.delete(new QueryWrapper<UserSkill>().eq("account_id", userAccount.getId()));
 
         for (int i = 0; i < skill.size(); i++) {
             JSONObject info = skill.getJSONObject(i);

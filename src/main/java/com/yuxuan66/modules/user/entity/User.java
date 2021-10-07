@@ -71,4 +71,9 @@ public class User implements Serializable {
      */
     private Timestamp createTime;
 
+    /**
+     * 是否在军团
+     */
+    private Boolean corp;
+
 }

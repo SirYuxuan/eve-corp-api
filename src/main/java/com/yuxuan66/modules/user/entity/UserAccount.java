@@ -114,6 +114,11 @@ public class UserAccount implements Serializable {
      */
     private Timestamp createTime;
 
+    /**
+     * 成员加入军团的时间
+     */
+    private Timestamp joinTime;
+
 
 
 

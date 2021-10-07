@@ -70,6 +70,7 @@ public class AuthService {
      */
     public String callback(String code, String state) {
 
+
         EsiTokenInfo tokenInfo = esiApi.codeToInfo(code);
 
         UserAccount userAccount = userAccountMapper.selectOne(new QueryWrapper<UserAccount>().eq("character_id", tokenInfo.getCharacterId()));
@@ -110,12 +111,12 @@ public class AuthService {
         userAccount.setAccessToken(tokenInfo.getAccessToken());
         userAccount.setRefreshToken(tokenInfo.getRefreshToken());
         userAccount.setCreateTime(Lang.getTime());
-        EsiAccountInfo accountInfo = EsiApi.getAccountInfo(userAccount.getCharacterId(), userAccount.getAccessToken());
+        EsiAccountInfo accountInfo = esiApi.getAccountInfo(userAccount.getCharacterId(), userAccount.getAccessToken());
         userAccount.setCorpId(accountInfo.getCorpId());
         userAccount.setCorpName(accountInfo.getCorpName());
         userAccount.setAllianceId(accountInfo.getAllianceId());
         userAccount.setAllianceName(accountInfo.getAllianceName());
-
+        userAccount.setJoinTime(accountInfo.getJoinTime());
         User user;
         if (userAccount.getIsMain()) {
             // 这个是主号，说明当前没有账号，开始创建
@@ -124,13 +125,16 @@ public class AuthService {
             // 如果用户不属于主军团，则无法通过总监权限获得系统管理权限
             if (!accountInfo.getCorpId().equals(systemConfig.getEveMainCorp())) {
                 user.setIsAdmin(false);
+                user.setCorp(false);
             } else {
                 List<String> roles = EsiApi.getUserRoles(userAccount.getCharacterId(), userAccount.getAccessToken());
                 user.setIsAdmin(roles.contains("Accountant"));
+                user.setCorp(true);
             }
             user.setLastTime(Lang.getTime());
             user.setLastIp(ServletUtil.getClientIP(WebUtil.getRequest()));
             user.setLastCity(WebUtil.getIPCity(user.getLastIp()));
+
             userMapper.insert(user);
             userAccount.setUserId(user.getId());
         } else {

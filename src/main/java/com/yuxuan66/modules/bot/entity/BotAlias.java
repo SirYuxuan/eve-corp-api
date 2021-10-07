@@ -44,5 +44,7 @@ public class BotAlias implements Serializable {
 
     private String name;
 
+    private Boolean status = true;
+
 
 }

@@ -19,24 +19,43 @@
 package com.yuxuan66.bot.api.modules;
 
 import cn.hutool.core.convert.Convert;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.XmlUtil;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
+import cn.hutool.poi.excel.ExcelUtil;
+import cn.hutool.poi.excel.ExcelWriter;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.yuxuan66.bot.api.ApiHelper;
 import com.yuxuan66.bot.api.BotApiDispenser;
+import com.yuxuan66.bot.api.BotMsgType;
 import com.yuxuan66.bot.api.entity.BotMessage;
+import com.yuxuan66.bot.api.entity.BotMessageData;
 import com.yuxuan66.cache.modules.EveCache;
 import com.yuxuan66.modules.bot.entity.BotAlias;
 import com.yuxuan66.modules.bot.mapper.BotAliasMapper;
+import com.yuxuan66.modules.corp.entity.GroupTime;
+import com.yuxuan66.modules.corp.mapper.GroupTimeMapper;
+import com.yuxuan66.modules.eve.entity.EveItemName;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
 import javax.annotation.Resource;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +73,8 @@ public class EveCenter extends BotApiDispenser {
     private EveCache eveCache;
     @Resource
     private BotAliasMapper botAliasMapper;
+    @Resource
+    private GroupTimeMapper groupTimeMapper;
 
     @Override
     public BotMessage dispenser(BotMessage botMessage) {
@@ -64,13 +85,165 @@ public class EveCenter extends BotApiDispenser {
                 return translate(botMessage);
             } else if (command.startsWith(".kb ") && command.split(" ").length > 1) {
                 return getKB(botMessage);
-            } else if (command.startsWith("jita ") || command.startsWith("gjita ") || command.startsWith(".col ") || command.startsWith(".gcol ")) {
+            } else if (command.toLowerCase().startsWith("jita ") || command.toLowerCase().startsWith("gjita ") || command.toLowerCase().startsWith(".col ") || command.toLowerCase().startsWith(".gcol ")) {
                 return getPrice(botMessage);
+            } else if (command.startsWith("as ") && command.split(" ").length >= 3) {
+                return addAlias(botMessage);
+            } else if (command.startsWith(".pic ")) {
+                return getPic(botMessage);
+            }else if (command.startsWith(".head ")) {
+                return getHead(botMessage);
+            }else if(command.startsWith(".con") || command.startsWith(".gon")){
+                try {
+                    return getMPic(botMessage);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
 
         return null;
+    }
+
+    public BotMessage getMPic(BotMessage message) throws IOException {
+        String data1 = ApiHelper.textCommandStr(message).replace(".con","").replace(".gon","").trim();
+        Connection.Response response1 = Jsoup.connect("https://eve.sgfans.org/navigator/jump_path_layout").execute();
+        String csrfmiddlewaretoken = response1.parse().getElementsByAttributeValue("name","csrfmiddlewaretoken").get(0).val();
+        Map<String,Object> data = new HashMap<>();
+        System.out.println(csrfmiddlewaretoken);
+        data.put("scanData",data1);
+        data.put("csrfmiddlewaretoken",csrfmiddlewaretoken);
+        data.put("server",ApiHelper.textCommandStr(message).startsWith(".con")?"tqcn":"srcn");
+        HttpRequest request = HttpUtil.createPost("https://tools.ceve-market.org/contract/");
+        request.form(data);
+        request.header("referer","https://tools.ceve-market.org/contract/");
+        request.header("cookie","csrftoken="+csrfmiddlewaretoken+";");
+        HttpResponse response = request.execute();
+        String path = response.header("location");
+        System.out.println(path);
+        WebClient web = new WebClient();
+        web.getOptions().setCssEnabled(false);
+        web.getOptions().setJavaScriptEnabled(true);
+        web.getOptions().setThrowExceptionOnScriptError(false);
+        web.getOptions().setUseInsecureSSL(true);
+        HtmlPage page = web.getPage("https://tools.ceve-market.org/" + path);
+        web.waitForBackgroundJavaScript(5000);
+        org.jsoup.nodes.Document document = Jsoup.parse(page.asXml());
+
+
+        return ApiHelper.textAt(message.getQq(),message.getGroup(),"估价为:\r\n" + "收单: " +document.getElementById("contract_buy_all").text()+"\r\n卖单: " + document.getElementById("contract_sell_all").text());
+    }
+
+    public BotMessage getPic(BotMessage botMessage) {
+        String name = ApiHelper.textCommandStr(botMessage).replace(".pic ", "").trim();
+
+        for (EveItemName eveItemName : eveCache.getEveItemName()) {
+            if((eveItemName.getZhName().equals(name) || eveItemName.getEnName().equalsIgnoreCase(name)) && eveItemName.getType() == 8){
+                return ApiHelper.image("https://cdn.yuxuan66.com/eve/Types/"+eveItemName.getItemId()+"_64.png");
+            }
+        }
+
+        return null;
+    }
+    public BotMessage getHead(BotMessage botMessage) {
+        String name = ApiHelper.textCommandStr(botMessage).replace(".head ", "").trim();
+        JSONArray jsonArray = JSONArray.parseArray(HttpUtil.get("https://zkillboard.com/autocomplete/"+name+"/"));
+        if(jsonArray.isEmpty()){
+            return ApiHelper.textAt(botMessage.getQq(),botMessage.getGroup(),"没有找到指定用户");
+        }
+        int index = 0;
+        if(jsonArray.size() != 1){
+            for (int i = 0; i < jsonArray.size(); i++) {
+                JSONObject temp = jsonArray.getJSONObject(i);
+                if(temp.getString("name").equalsIgnoreCase(name)){
+                    index=i;
+                    break;
+                }
+            }
+        }
+
+        String cid = jsonArray.getJSONObject(index).getString("id");
+        String cname = jsonArray.getJSONObject(index).getString("name");
+
+        JSONObject data =JSONObject.parseObject(HttpUtil.get("https://esi.evetech.net/latest/characters/"+cid+"/?datasource=tranquility"));
+        String alliance_id = data.getString("alliance_id");
+        String corporation_id = data.getString("corporation_id");
+        String corporationName = JSONObject.parseObject(HttpUtil.get("https://esi.evetech.net/latest/corporations/"+corporation_id+"/?datasource=tranquility")).getString("name");
+        String allianceName = JSONObject.parseObject(HttpUtil.get("https://esi.evetech.net/latest/alliances/"+alliance_id+"/?datasource=tranquility")).getString("name");
+
+        BotMessage botMessage1 = ApiHelper.image("https://images.evetech.net/characters/"+cid+"/portrait?size=256");
+        BotMessageData botMessageData = new BotMessageData();
+        botMessageData.setType(BotMsgType.TEXT);
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("角色名称: " + cname+"\r\n");
+        stringBuilder.append("军团名称: " + corporationName+"\r\n");
+        stringBuilder.append("联盟名称: " + allianceName+"\r\n");
+        botMessageData.setMsg(stringBuilder.toString());
+        botMessage1.getMessageDataList().add(botMessageData);
+        return botMessage1;
+    }
+
+
+
+    /**
+     * 添加别名
+     *
+     * @return 机器人消息
+     */
+    public BotMessage addAlias(BotMessage botMessage) {
+        String[] arr = ApiHelper.textCommandStr(botMessage).split(" ");
+        int count = botAliasMapper.selectCount(new QueryWrapper<BotAlias>().eq("alias_name", arr[1]));
+        if (count > 0) {
+            return ApiHelper.textAt(botMessage.getQq(), botMessage.getGroup(), "改别名已经存在，请勿重复添加");
+        }
+        BotAlias botAlias = new BotAlias();
+        botAlias.setStatus(false);
+        botAlias.setAliasName(arr[1]);
+        String name = "";
+        for (int i = 2; i < arr.length; i++) {
+            name += arr[i] + (i == arr.length - 1 ? "" : " ");
+        }
+        botAlias.setName(name);
+        botAliasMapper.insert(botAlias);
+        return ApiHelper.textAt(botMessage.getQq(), botMessage.getGroup(), "感谢您的支持，此别名在雨轩审核后生效");
+    }
+
+    public static void main1(String[] args) {
+        String content = FileUtil.readString(new File("C:\\Users\\Administrator\\Desktop\\A"), Charset.defaultCharset());
+        Map<String, String> result = new HashMap<>();
+        for (String arr : content.split("\r\n")) {
+            String[] item = arr.trim().split("        ");
+            if (item.length == 3) {
+                if (!result.containsKey(item[1])) {
+                    result.put(item[1], item[2]);
+                }
+
+            }
+            if (item.length == 5) {
+                result.put("Metropolis", "美特伯里斯");
+                if (!result.containsKey(item[0])) {
+                    result.put(item[0], item[3]);
+                }
+                if (!result.containsKey(item[1])) {
+                    result.put(item[1], item[4]);
+                }
+
+            }
+        }
+
+        List<Map<String, Object>> excel = new ArrayList<>();
+        for (Map.Entry<String, String> stringStringEntry : result.entrySet()) {
+            Map<String, Object> temp = new HashMap<>();
+            temp.put("name", stringStringEntry.getKey());
+            temp.put("zhName", stringStringEntry.getValue());
+            excel.add(temp);
+        }
+
+        ExcelWriter writer = ExcelUtil.getWriter(new File("C://a.xls"));
+        writer.write(excel);
+        writer.flush();
+        System.out.println(JSON.toJSONString(result));
     }
 
     /**
@@ -92,7 +265,7 @@ public class EveCenter extends BotApiDispenser {
             // 尝试遍历value
             for (String key : nameMapping.keySet()) {
                 String enName = Convert.toStr(nameMapping.get(key));
-                if (enName.equals(name)) {
+                if (enName.equalsIgnoreCase(name)) {
                     result.append(key);
                     break;
                 }
@@ -181,16 +354,26 @@ public class EveCenter extends BotApiDispenser {
      */
     public BotMessage getPrice(BotMessage botMessage) {
 
+        GroupTime groupTime = groupTimeMapper.selectOne(new QueryWrapper<GroupTime>().eq("`group`",botMessage.getGroup()+""));
+        if(groupTime == null){
+            return ApiHelper.textAt(botMessage.getQq(),botMessage.getGroup(),"对不起 本群尚未开通吉他查询功能，如需开通请联系Q：1718018032，如不需要此服务请踢出机器人");
+        }
+        if(groupTime.getEndTime().getTime() < System.currentTimeMillis()){
+            return ApiHelper.textAt(botMessage.getQq(),botMessage.getGroup(),"对不起 本群吉他查询功能已到期，如需续费请联系Q：1718018032，如不需要此服务请踢出机器人");
+        }
+
+
+
         String name = ApiHelper.textCommandStr(botMessage).replace(".kb ", "").trim();
 
-        boolean isAll = name.startsWith(".col ") || name.startsWith(".gcol ");
+        boolean isAll = name.toLowerCase().startsWith(".col ") || name.toLowerCase().startsWith(".gcol ");
 
-        boolean isEur = name.startsWith("jita ") || name.startsWith(".col ");
+        boolean isEur = name.toLowerCase().startsWith("jita ") || name.toLowerCase().startsWith(".col ");
 
         name = isEur ? name.substring(5) : name.substring(6);
 
         // 获取是否存在简写库
-        List<BotAlias> botAliasList = botAliasMapper.selectList(new QueryWrapper<BotAlias>().eq("alias_name", name));
+        List<BotAlias> botAliasList = botAliasMapper.selectList(new QueryWrapper<BotAlias>().eq("alias_name", name).eq("status", true));
 
         String enName = "";
 
@@ -221,7 +404,7 @@ public class EveCenter extends BotApiDispenser {
         JSONArray jsonArray = JSONObject.parseArray(result);
 
         if (jsonArray.isEmpty()) {
-            return ApiHelper.textAt(botMessage.getQq(), botMessage.getGroup(), "查点人能看懂的?");
+                return ApiHelper.textAt(botMessage.getQq(), botMessage.getGroup(), "查点人能看懂的?");
         }
 
         StringBuilder sendMessage = new StringBuilder();
@@ -257,8 +440,8 @@ public class EveCenter extends BotApiDispenser {
             sendMessage.append("\r\n").append(typeName).append(" \r\n收单: ").append(NumberUtil.decimalFormat(",###", Convert.toLong(buyMax))).append(" ISK").append(" \r\n卖单: ").append(NumberUtil.decimalFormat(",###", Convert.toLong(sellMin))).append(" ISK\r\n=============");
             if (name.equals("伊甸币")) {
                 sendMessage.append("\r\n500*伊甸币价格");
-                sendMessage.append("\r\n收单: ").append(NumberUtil.decimalFormat(",###", Convert.toLong(buyMax)*500)).append(" ISK");
-                sendMessage.append("\r\n卖单: ").append(NumberUtil.decimalFormat(",###", Convert.toLong(sellMin)*500)).append(" ISK");
+                sendMessage.append("\r\n收单: ").append(NumberUtil.decimalFormat(",###", Convert.toLong(buyMax) * 500)).append(" ISK");
+                sendMessage.append("\r\n卖单: ").append(NumberUtil.decimalFormat(",###", Convert.toLong(sellMin) * 500)).append(" ISK");
                 sendMessage.append("\r\n=============");
 
             }

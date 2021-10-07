@@ -43,10 +43,64 @@
         <sa-token.version>1.24.0</sa-token.version>
         <javax-mail.version>1.6.2</javax-mail.version>
         <aio-core.version>1.5.6</aio-core.version>
+        <druid.version>1.2.6</druid.version>
+        <jsoup.version>1.12.2</jsoup.version>
+        <poi.version>4.1.2</poi.version>
+        <xmlbeans.version>3.1.0</xmlbeans.version>
+        <xbean.version>2.2.0</xbean.version>
+        <ooxml-schemas.version>1.4</ooxml-schemas.version>
     </properties>
 
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/net.sourceforge.htmlunit/htmlunit -->
+        <dependency>
+            <groupId>net.sourceforge.htmlunit</groupId>
+            <artifactId>htmlunit</artifactId>
+            <version>2.53.0</version>
+        </dependency>
 
+        <!-- poi -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>ooxml-schemas</artifactId>
+            <version>${ooxml-schemas.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.xmlbeans</groupId>
+            <artifactId>xmlbeans</artifactId>
+            <version>${xmlbeans.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>poi-ooxml-lite</artifactId>
+                    <groupId>org.apache.poi</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-scratchpad</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+
+        <!-- jsoup -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${jsoup.version}</version>
+        </dependency>
+
+        <!-- druid -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+            <version>${druid.version}</version>
+        </dependency>
 
         <!-- Socket Lib -->
         <dependency>
